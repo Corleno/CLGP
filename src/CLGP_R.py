@@ -160,7 +160,7 @@ class CLGP_R():
                 Comp_F_tt = 0
 
                 ### Sample X
-                sampled_eps_X = tf.random_normal([self.N, self.Q])
+                sampled_eps_X = tf.random_normal([self.N, self.Q])*0.1
                 self.sampled_X = self.m + tf.multiply(self.s, sampled_eps_X)
                 print ("QX has been sampled.") # N by Q
 
