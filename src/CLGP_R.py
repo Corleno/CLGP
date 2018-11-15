@@ -137,6 +137,7 @@ class CLGP_R():
 
         with tf.name_scope('KL_U'):
             KL_U_mat = tf.distributions.kl_divergence(QU, PU, name = 'KL_U_mat')
+            self.KL_U_mat = KL_U_mat
             indx = [[d, k] for d in range(self.D) for k in range(self.K[d])]
             self.KL_U = tf.reduce_sum(tf.gather_nd(KL_U_mat, indx), name = 'KL_U')
             tf.summary.scalar("summary/KL_U", self.KL_U)
@@ -160,7 +161,7 @@ class CLGP_R():
                 Comp_F_tt = 0
 
                 ### Sample X
-                sampled_eps_X = tf.random_normal([self.N, self.Q])*0.1
+                sampled_eps_X = tf.random_normal([self.N, self.Q])
                 self.sampled_X = self.m + tf.multiply(self.s, sampled_eps_X)
                 print ("QX has been sampled.") # N by Q
 
@@ -464,7 +465,6 @@ class CLGP_R():
                 plt.close()
                 
             lp_test_pred_hist.append(self.est_lp_test_pred)
-        
         self.lp_test_pred_hist = lp_test_pred_hist
 
         if verbose:
@@ -542,7 +542,7 @@ if __name__=="__main__":
     parser.add_argument("--reg", help="regularization", type=float, default=-1)
     parser.add_argument("--training_epochs", help="number of training epochs", type=int, default=2000)
     parser.add_argument("--testing_epochs", help="number of testing epochs", type=int, default=1000)
-    parser.add_argument("--learning_rate_train", help="learning rate for training data", type=float, default=0.01)
+    parser.add_argument("--learning_rate_train", help="learning rate for training data", type=float, default=0.001)
     parser.add_argument("--learning_rate_test", help="learning rate for testing data", type=float, default=0.01)
     parser.add_argument("--lower_bound", help="lower_bound of length scale in GP across time", type=float, default=0)
     parser.add_argument("--n_incomplete", help="number of incomplete pixels for every testing data", type=int, default=20)
@@ -605,14 +605,14 @@ if __name__=="__main__":
     logging.basicConfig(level=logging.DEBUG, filename='CLGP_R_{}.log'.format(args.method))
 
     # Train data
-    np.random.seed(222)
+    np.random.seed(22)
     clgp_r = CLGP_R(M=M, Q=Q, MC_T=MC_T, reg=reg, init_loc=init_loc, init_inducing=init_inducing)
     # Create graph
     clgp_r.Create_graph(y_train, y_test, learning_rate_train=args.learning_rate_train, learning_rate_test=args.learning_rate_test)
     # Training step
-    clgp_r.Fit(y_train, display_step=5, training_epochs=args.training_epochs, verbose=True)
+    clgp_r.Fit(y_train, display_step=10, training_epochs=args.training_epochs, verbose=True)
     # Testing step
-    clgp_r.Test(y_test, display_step=5, testing_epochs=args.testing_epochs, verbose=True)
+    clgp_r.Test(y_test, display_step=10, testing_epochs=args.testing_epochs, verbose=True)
 
     # plot all latent variables and inducing points
     # x_vec = np.concatenate([clgp_r.est_m[:,0], clgp_r.est_Z[:,0]])
