@@ -464,7 +464,8 @@ class CLGP_R():
                 plt.close()
                 
             lp_test_pred_hist.append(self.est_lp_test_pred)
-            self.lp_test_pred_hist = lp_test_pred_hist
+        
+        self.lp_test_pred_hist = lp_test_pred_hist
 
         if verbose:
             fig=plt.figure()
@@ -609,7 +610,7 @@ if __name__=="__main__":
     # Create graph
     clgp_r.Create_graph(y_train, y_test, learning_rate_train=args.learning_rate_train, learning_rate_test=args.learning_rate_test)
     # Training step
-    # clgp_r.Fit(y_train, display_step=5, training_epochs=args.training_epochs, verbose=True)
+    clgp_r.Fit(y_train, display_step=5, training_epochs=args.training_epochs, verbose=True)
     # Testing step
     clgp_r.Test(y_test, display_step=5, testing_epochs=args.testing_epochs, verbose=True)
 
@@ -623,5 +624,5 @@ if __name__=="__main__":
     # plt.close()
 
     # Saving parameters
-    # with open("pars.pickle", "wb") as file:
-    #     pickle.dump([clgp_r.elbo_hist, clgp_r.lp_train_hist, clgp_r.lp_test_hist, clgp_r.est_tilde_X, clgp_r.est_Z, clgp_r.est_m, clgp_r.est_theta], file)
+    with open("pars.pickle", "wb") as file:
+        pickle.dump([clgp_r.elbo_hist, clgp_r.lp_train_hist, clgp_r.lp_test_pred_hist, clgp_r.est_tilde_X, clgp_r.est_Z, clgp_r.est_m, clgp_r.est_theta], file)
