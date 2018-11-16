@@ -439,8 +439,11 @@ class CLGP_R():
             os.makedirs('test_figs')
         except:
             pass
+
         try:
-            os.makedirs('test_figs_seperate')
+            os.makedirs('test_figs/ell')
+            os.makedirs('test_figs/lp')
+            os.makedirs('test_figs/tilde_X')
         except:
             pass
 
@@ -465,17 +468,7 @@ class CLGP_R():
         for indx in range(n_rs):
             # Random sample the testing embedding inputs
             self.sess.run(self.assign_rs_tilde_X, feed_dict={self.init_tilde_X: np.random.randn(self.N_test, self.Q)})
-            # self.est_tilde_X, self.est_Z = self.sess.run([self.tilde_X, self.Z])
-            # if verbose:
-            #     # plot all latent variables and inducing points
-            #     x_vec = np.concatenate([self.est_tilde_X[:,0], self.est_Z[:,0]])
-            #     y_vec = np.concatenate([self.est_tilde_X[:,1], self.est_Z[:,1]])
-            #     label_vec = list(y_test_labels) + ["x" for i in range(M)]
-            #     est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-            #     fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-            #     fig.savefig('tilde_X_init_{}.png'.format(indx))
-            #     plt.close()  
-
+        
             #### Testing (Optimization together)
             ell_test_hist = []
             lp_test_pred_hist = []
@@ -484,7 +477,6 @@ class CLGP_R():
             for epoch in range(self.testing_epochs):
                 self.sess.run(self.test)
                 if epoch % display_step == 0:
-                    # print(self.sess.run([self.Z, self.theta]))
                     # print training information
                     self.est_tilde_X, self.est_ell_test, self.est_acc_test_pred, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test, self.acc_test_pred, self.ell_test_pred, self.lp_test_pred, self.Z])
                     logging.info("Epoch: {}".format(epoch+1))
@@ -517,17 +509,17 @@ class CLGP_R():
                 label_vec = list(y_test_labels) + ["x" for i in range(M)]
                 est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
                 fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('tilde_X_{}.png'.format(indx))
+                fig.savefig('test_figs/tilde_X/tilde_X_{}.png'.format(indx))
                 plt.close()
                 fig=plt.figure()
                 plt.plot(ell_test_hist)
                 plt.title('ell_test_trace')
-                fig.savefig('ell_test_trace_{}.png'.format(indx))
+                fig.savefig('test_figs/ell/ell_test_trace_{}.png'.format(indx))
                 plt.close()
                 fig=plt.figure()
                 plt.plot(lp_test_pred_hist)
                 plt.title('lp_test_pred_trace')
-                fig.savefig('lp_test_pred_trace_{}.png'.format(indx))
+                fig.savefig('test_figs/lp/lp_test_pred_trace_{}.png'.format(indx))
                 plt.close()
 
         self.est_lp_test_pred_list = est_lp_test_pred_list
@@ -537,42 +529,6 @@ class CLGP_R():
         max_indx = np.argmax(np.array(est_lp_test_pred_list))
         self.est_lp_test_pred = np.max(np.array(est_lp_test_pred_list))
         self.est_tilde_X = est_tilde_X_list[max_indx]
-        
-        
-
-
-        # #### Testing (Optimization seperately)
-        # lp_test_pred_hist = []
-        # logging.info("Start to test!")
-    
-        # for epoch in range(self.testing_epochs):
-        #     for indx in range(y_test.shape[0]):
-        #         self.sess.run(self.test_indx, feed_dict={self.indx: indx})
-        #     if epoch % display_step == 0:
-        #         # print(self.sess.run([self.Z, self.theta]))
-        #         # print training information
-        #         self.est_tilde_X, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test_pred, self.lp_test_pred, self.Z])
-        #         logging.info("Epoch: {}".format(epoch+1))
-        #         logging.info("lp_test_pred: {}".format(self.est_lp_test_pred))
-                
-        #         # plot all latent variables and inducing points
-        #         x_vec = np.concatenate([clgp_r.est_tilde_X[:,0], clgp_r.est_Z[:,0]])
-        #         y_vec = np.concatenate([clgp_r.est_tilde_X[:,1], clgp_r.est_Z[:,1]])
-        #         label_vec = list(y_test_labels) + ["x" for i in range(M)]
-        #         est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-        #         fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-        #         fig.savefig('test_figs_seperate/LS_{}_{}_test.png'.format(args.method, epoch))
-        #         plt.close()
-                
-        #     lp_test_pred_hist.append(self.est_lp_test_pred)
-        #     self.lp_test_pred_hist = lp_test_pred_hist
-
-        # if verbose:
-        #     fig=plt.figure()
-        #     plt.plot(lp_test_pred_hist)
-        #     plt.title('lp_test_pred_trace')
-        #     fig.savefig('lp_test_pred_trace_{}.png'.format(args.method))
-        #     plt.close()
 
         self.sess.close()
 
@@ -680,7 +636,7 @@ if __name__=="__main__":
     # Training step
     # clgp_r.Fit(y_train, display_step=5, training_epochs=args.training_epochs, verbose=True)
     # Testing step
-    clgp_r.Test(y_test, n_rs=args.n_rs, display_step=5, testing_epochs=args.testing_epochs, verbose=True)
+    clgp_r.Test(y_test, n_rs=args.n_rs, display_step=10, testing_epochs=args.testing_epochs, verbose=True)
 
     # plot all latent variables and inducing points
     # x_vec = np.concatenate([clgp_r.est_m[:,0], clgp_r.est_Z[:,0]])
