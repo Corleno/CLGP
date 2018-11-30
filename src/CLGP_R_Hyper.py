@@ -383,13 +383,13 @@ class CLGP_R():
                 fig.savefig('train_figs/LS_{}_{}.png'.format(args.method, epoch))
                 plt.close()
 
-                x_vec = np.concatenate([clgp_r.est_sampled_X[:,0], clgp_r.est_Z[:,0]])
-                y_vec = np.concatenate([clgp_r.est_sampled_X[:,1], clgp_r.est_Z[:,1]])
-                label_vec = list(y_train_labels) + ["x" for i in range(M)]
-                est_sampled_x_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                fig = sns.lmplot(data=est_sampled_x_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('train_figs/LS_{}_{}_sample.png'.format(args.method, epoch))
-                plt.close()                
+                # x_vec = np.concatenate([clgp_r.est_sampled_X[:,0], clgp_r.est_Z[:,0]])
+                # y_vec = np.concatenate([clgp_r.est_sampled_X[:,1], clgp_r.est_Z[:,1]])
+                # label_vec = list(y_train_labels) + ["x" for i in range(M)]
+                # est_sampled_x_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
+                # fig = sns.lmplot(data=est_sampled_x_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
+                # fig.savefig('train_figs/LS_{}_{}_sample.png'.format(args.method, epoch))
+                # plt.close()                
 
             writer.add_summary(self.summary, epoch)
             lamb = min(1, lamb_inc+lamb)
@@ -650,7 +650,7 @@ if __name__=="__main__":
     # Create graph
     clgp_r.Create_graph(y_train, y_test, learning_rate_train=args.learning_rate_train, learning_rate_test=args.learning_rate_test)
     # Training step
-    clgp_r.Fit(y_train, display_step=50, training_epochs=args.training_epochs, verbose=True)
+    clgp_r.Fit(y_train, display_step=500, training_epochs=args.training_epochs, verbose=True)
     # Testing step
     # clgp_r.Test(y_test, n_rs=args.n_rs, display_step=50, testing_epochs=args.testing_epochs, verbose=True)
 
@@ -665,4 +665,4 @@ if __name__=="__main__":
 
     # Saving parameters
     # with open("pars.pickle", "wb") as file:
-    #     pickle.dump([clgp_r.elbo_hist, clgp_r.lp_train_hist, clgp_r.lp_test_hist, clgp_r.est_tilde_X, clgp_r.est_Z, clgp_r.est_m, clgp_r.est_theta], file)
+    #     pickle.dump([clgp_r.elbo_hist, clgp_r.lp_train_hist, clgp_r.lp_test_hist, clgp_r.est_tilde_X, clgp_r.est_Z, clgp_r.est_m, clgp_r.est_theta], file
