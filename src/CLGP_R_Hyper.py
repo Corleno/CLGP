@@ -12,6 +12,7 @@ import tensorflow_probability as tfp
 import pickle
 import time
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import argparse
 import logging
 import os
@@ -96,7 +97,6 @@ class CLGP_R():
             # Estimation for X and U
             self.hat_X = self.m
             self.hat_U = self.mu
-
             # summarize m
             tf.summary.histogram("summary/m_0", self.m[:,0])
             tf.summary.histogram("summary/m_1", self.m[:,1])
@@ -383,14 +383,6 @@ class CLGP_R():
                 fig.savefig('train_figs/LS_{}_{}.png'.format(args.method, epoch))
                 plt.close()
 
-                # x_vec = np.concatenate([clgp_r.est_sampled_X[:,0], clgp_r.est_Z[:,0]])
-                # y_vec = np.concatenate([clgp_r.est_sampled_X[:,1], clgp_r.est_Z[:,1]])
-                # label_vec = list(y_train_labels) + ["x" for i in range(M)]
-                # est_sampled_x_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                # fig = sns.lmplot(data=est_sampled_x_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                # fig.savefig('train_figs/LS_{}_{}_sample.png'.format(args.method, epoch))
-                # plt.close()                
-
             writer.add_summary(self.summary, epoch)
             lamb = min(1, lamb_inc+lamb)
             elbo_hist.append(self.est_elbo)
@@ -409,7 +401,10 @@ class CLGP_R():
             plt.title('lp_train_trace')
             fig.savefig('lp_train_trace_{}.png'.format(args.method))
             plt.close()
-            
+            self.est_theta, self.est_s, self.est_hyper_s = self.sess.run([self.theta, self.s, self.hyper_s])
+            logging.info("Hyper-parameters in covariance functions is {}".format(self.est_theta))
+            logging.info("Standard deviations of variational distribution for embedding inputs are {}".format(self.est_s))
+            logging.info("Standard deviations of prior distribution for embedding inputs are {}".format(self.est_hyper_s))            
 
 
         # Close history, saver, model saver and session
@@ -513,6 +508,7 @@ class CLGP_R():
 
         max_indx = np.argmax(np.array(est_lp_test_pred_list))
         self.est_tilde_X = est_tilde_X_list[max_indx]
+    
         # #### Testing (Optimization seperately)
         # lp_test_pred_hist = []
         # logging.info("Start to test!")

@@ -12,6 +12,7 @@ import tensorflow_probability as tfp
 import pickle
 import time
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import argparse
 import logging
 import os
