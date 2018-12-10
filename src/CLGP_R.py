@@ -362,7 +362,7 @@ class CLGP_R():
             # self.sess.run(self.train, feed_dict={self.lamb: lamb})
             self.sess.run(self.train_latent, feed_dict={self.lamb: lamb})
             self.sess.run(self.train_hyper, feed_dict={self.lamb: lamb})
-            if epoch % display_step == 0:
+            if epoch % display_step == display_step-1:
                 # print(self.sess.run([self.Z, self.theta]))
                 # print training information
                 self.est_lamb, self.est_elbo, self.est_theta, self.est_Z, self.est_m, self.est_sampled_X, self.est_mu, self.est_L, self.est_Sigma_U_list, self.est_U_noise_list, self.est_KL_U, self.est_KL_X, self.est_KL_ZX, self.est_Comp_F, self.summary = self.sess.run([self.lamb, self.elbo, self.theta, self.Z, self.m, self.sampled_X, self.mu, self.L, self.Sigma_U_list, self.U_noise_list, self.KL_U, self.KL_X, self.KL_ZX, self.Comp_F, self.summ], feed_dict={self.lamb: lamb})
@@ -377,18 +377,10 @@ class CLGP_R():
                 label_vec = list(y_train_labels) + ["x" for i in range(M)]
                 est_m_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
                 fig = sns.lmplot(data=est_m_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('train_figs/LS_{}_{}.png'.format(args.method, epoch))
+                fig.savefig('train_figs/LS_{}_{}.png'.format(args.method, epoch+1))
                 plt.close()
 
-                x_vec = np.concatenate([clgp_r.est_sampled_X[:,0], clgp_r.est_Z[:,0]])
-                y_vec = np.concatenate([clgp_r.est_sampled_X[:,1], clgp_r.est_Z[:,1]])
-                label_vec = list(y_train_labels) + ["x" for i in range(M)]
-                est_sampled_x_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                fig = sns.lmplot(data=est_sampled_x_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('train_figs/LS_{}_{}_sample.png'.format(args.method, epoch))
-                plt.close()                
-
-            writer.add_summary(self.summary, epoch)
+            writer.add_summary(self.summary, epoch+1)
             lamb = min(1, lamb_inc+lamb)
             elbo_hist.append(self.est_elbo)
             lp_train_hist.append(self.est_lp_train)
@@ -415,99 +407,6 @@ class CLGP_R():
         # Save model weights to disk
         saver.save(self.sess, model_path)
         print("Model has beend saved under{}".format(model_path))
-        self.sess.close()
-
-    def Test(self, Y_test, display_step=5, testing_epochs=1000, model_path='./model/model_tem.ckpt', verbose=False):
-        # create folder for training figures
-        try:
-            os.makedirs('test_figs')
-        except:
-            pass
-        try:
-            os.makedirs('test_figs_seperate')
-        except:
-            pass
-
-
-        self.testing_epochs=testing_epochs
-
-        # Launch the session
-        self.sess = tf.InteractiveSession()
-        self.sess.run(self.init)
-
-        # cretate a model saver
-        saver = tf.train.Saver()
-        # Initializing the tensor flow variables
-        init = tf.global_variables_initializer()
-        # Restore model
-        saver.restore(self.sess, model_path)
-        print("Model restored.")
-
-        #### Testing (Optimization together)
-        lp_test_pred_hist = []
-        logging.info("Start to test!")
-
-        for epoch in range(self.testing_epochs):
-            self.sess.run(self.test)
-            if epoch % display_step == 0:
-                # print(self.sess.run([self.Z, self.theta]))
-                # print training information
-                self.est_tilde_X, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test_pred, self.lp_test_pred, self.Z])
-                logging.info("Epoch: {}".format(epoch+1))
-                logging.info("lp_test_pred: {}".format(self.est_lp_test_pred))
-                
-                # plot all latent variables and inducing points
-                x_vec = np.concatenate([clgp_r.est_tilde_X[:,0], clgp_r.est_Z[:,0]])
-                y_vec = np.concatenate([clgp_r.est_tilde_X[:,1], clgp_r.est_Z[:,1]])
-                label_vec = list(y_test_labels) + ["x" for i in range(M)]
-                est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('test_figs/LS_{}_{}_test.png'.format(args.method, epoch))
-                plt.close()
-                
-            lp_test_pred_hist.append(self.est_lp_test_pred)
-        self.lp_test_pred_hist = lp_test_pred_hist
-
-        if verbose:
-            fig=plt.figure()
-            plt.plot(lp_test_pred_hist)
-            plt.title('lp_test_pred_trace')
-            fig.savefig('lp_test_pred_trace_{}.png'.format(args.method))
-            plt.close()
-
-        # #### Testing (Optimization seperately)
-        # lp_test_pred_hist = []
-        # logging.info("Start to test!")
-    
-        # for epoch in range(self.testing_epochs):
-        #     for indx in range(y_test.shape[0]):
-        #         self.sess.run(self.test_indx, feed_dict={self.indx: indx})
-        #     if epoch % display_step == 0:
-        #         # print(self.sess.run([self.Z, self.theta]))
-        #         # print training information
-        #         self.est_tilde_X, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test_pred, self.lp_test_pred, self.Z])
-        #         logging.info("Epoch: {}".format(epoch+1))
-        #         logging.info("lp_test_pred: {}".format(self.est_lp_test_pred))
-                
-        #         # plot all latent variables and inducing points
-        #         x_vec = np.concatenate([clgp_r.est_tilde_X[:,0], clgp_r.est_Z[:,0]])
-        #         y_vec = np.concatenate([clgp_r.est_tilde_X[:,1], clgp_r.est_Z[:,1]])
-        #         label_vec = list(y_test_labels) + ["x" for i in range(M)]
-        #         est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-        #         fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-        #         fig.savefig('test_figs_seperate/LS_{}_{}_test.png'.format(args.method, epoch))
-        #         plt.close()
-                
-        #     lp_test_pred_hist.append(self.est_lp_test_pred)
-        #     self.lp_test_pred_hist = lp_test_pred_hist
-
-        # if verbose:
-        #     fig=plt.figure()
-        #     plt.plot(lp_test_pred_hist)
-        #     plt.title('lp_test_pred_trace')
-        #     fig.savefig('lp_test_pred_trace_{}.png'.format(args.method))
-        #     plt.close()
-
         self.sess.close()
 
     def Cov_mat(self, theta, X1, X2 = None):
@@ -541,10 +440,10 @@ if __name__=="__main__":
     parser.add_argument("--method_test", help="methods: Adam, RSM, Adagrad", type=str, default='Adam')
     parser.add_argument("--dataset", help="name of dataset", type=str, default='binaryalphadigs_small')
     parser.add_argument("--reg", help="regularization", type=float, default=-1)
-    parser.add_argument("--training_epochs", help="number of training epochs", type=int, default=2000)
-    parser.add_argument("--testing_epochs", help="number of testing epochs", type=int, default=1000)
+    parser.add_argument("--training_epochs", help="number of training epochs", type=int, default=5000)
+    parser.add_argument("--testing_epochs", help="number of testing epochs", type=int, default=250)
     parser.add_argument("--learning_rate_train", help="learning rate for training data", type=float, default=0.001)
-    parser.add_argument("--learning_rate_test", help="learning rate for testing data", type=float, default=0.01)
+    parser.add_argument("--learning_rate_test", help="learning rate for testing data", type=float, default=0.001)
     parser.add_argument("--lower_bound", help="lower_bound of length scale in GP across time", type=float, default=0)
     parser.add_argument("--n_incomplete", help="number of incomplete pixels for every testing data", type=int, default=20)
     args=parser.parse_args()
@@ -606,24 +505,10 @@ if __name__=="__main__":
     logging.basicConfig(level=logging.DEBUG, filename='CLGP_R_{}.log'.format(args.method))
 
     # Train data
-    np.random.seed(22)
+    np.random.seed(222)
     clgp_r = CLGP_R(M=M, Q=Q, MC_T=MC_T, reg=reg, init_loc=init_loc, init_inducing=init_inducing)
     # Create graph
     clgp_r.Create_graph(y_train, y_test, learning_rate_train=args.learning_rate_train, learning_rate_test=args.learning_rate_test)
     # Training step
-    clgp_r.Fit(y_train, display_step=10, training_epochs=args.training_epochs, verbose=True)
-    # Testing step
-    clgp_r.Test(y_test, display_step=10, testing_epochs=args.testing_epochs, verbose=True)
-
-    # plot all latent variables and inducing points
-    # x_vec = np.concatenate([clgp_r.est_m[:,0], clgp_r.est_Z[:,0]])
-    # y_vec = np.concatenate([clgp_r.est_m[:,1], clgp_r.est_Z[:,1]])
-    # label_vec = list(y_train_labels) + ["x" for i in range(M)]
-    # est_m_stacked_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-    # fig = sns.lmplot(data=est_m_stacked_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-    # fig.savefig('LS_{}.png'.format(args.method))
-    # plt.close()
-
-    # Saving parameters
-    with open("pars.pickle", "wb") as file:
-        pickle.dump([clgp_r.elbo_hist, clgp_r.lp_train_hist, clgp_r.lp_test_pred_hist, clgp_r.est_tilde_X, clgp_r.est_Z, clgp_r.est_m, clgp_r.est_theta], file)
+    clgp_r.Fit(y_train, display_step=500, training_epochs=args.training_epochs, verbose=True)
+   

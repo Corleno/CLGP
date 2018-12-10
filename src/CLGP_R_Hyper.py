@@ -415,135 +415,6 @@ class CLGP_R():
         print("Model has beend saved under{}".format(model_path))
         self.sess.close()
 
-    def Test(self, Y_test, n_rs = 1, display_step=5, testing_epochs=1000, model_path='./model/model_tem.ckpt', verbose=False):
-        # create folder for training figures
-        try:
-            os.makedirs('test_figs')
-        except:
-            pass
-        try:
-            os.makedirs('test_figs_seperate')
-        except:
-            pass
-
-
-        self.testing_epochs=testing_epochs
-
-        # Launch the session
-        self.sess = tf.InteractiveSession()
-        self.sess.run(self.init)
-
-        # cretate a model saver
-        saver = tf.train.Saver()
-        # Initializing the tensor flow variables
-        init = tf.global_variables_initializer()
-        # Restore model
-        saver.restore(self.sess, model_path)
-        print("Model restored.")
-
-        est_lp_test_pred_list = []
-        est_tilde_X_list = []
-        for indx in range(n_rs):
-            # Random sample the testing embedding inputs
-            self.sess.run(self.assign_rs_tilde_X, feed_dict={self.init_tilde_X: np.random.randn(self.N_test, self.Q)})
-            self.est_tilde_X, self.est_Z = self.sess.run([self.tilde_X, self.Z])
-            if verbose:
-                # plot all latent variables and inducing points
-                x_vec = np.concatenate([self.est_tilde_X[:,0], self.est_Z[:,0]])
-                y_vec = np.concatenate([self.est_tilde_X[:,1], self.est_Z[:,1]])
-                label_vec = list(y_test_labels) + ["x" for i in range(M)]
-                est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('tilde_X_init_{}.png'.format(indx))
-                plt.close()  
-
-            #### Testing (Optimization together)
-            ell_test_hist = []
-            lp_test_pred_hist = []
-            logging.info("Start to test!")
-
-            for epoch in range(self.testing_epochs):
-                self.sess.run(self.test)
-                if epoch % display_step == 0:
-                    # print(self.sess.run([self.Z, self.theta]))
-                    # print training information
-                    self.est_tilde_X, self.est_ell_test, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test, self.ell_test_pred, self.lp_test_pred, self.Z])
-                    logging.info("Epoch: {}".format(epoch+1))
-                    logging.info("lp_test_pred: {}".format(self.est_lp_test_pred))
-                    
-                    # # plot all latent variables and inducing points
-                    # x_vec = np.concatenate([clgp_r.est_tilde_X[:,0], clgp_r.est_Z[:,0]])
-                    # y_vec = np.concatenate([clgp_r.est_tilde_X[:,1], clgp_r.est_Z[:,1]])
-                    # label_vec = list(y_test_labels) + ["x" for i in range(M)]
-                    # est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                    # fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                    # fig.savefig('test_figs/LS_{}_{}_test.png'.format(args.method, epoch))
-                    # plt.close()
-                    
-                ell_test_hist.append(self.est_ell_test)
-                lp_test_pred_hist.append(self.est_lp_test_pred)
-                self.lp_test_pred_hist = lp_test_pred_hist
-                
-            est_lp_test_pred_list.append(self.est_lp_test_pred)
-            est_tilde_X_list.append(self.est_tilde_X)
-            if verbose:
-                # plot all latent variables and inducing points
-                x_vec = np.concatenate([self.est_tilde_X[:,0], self.est_Z[:,0]])
-                y_vec = np.concatenate([self.est_tilde_X[:,1], self.est_Z[:,1]])
-                label_vec = list(y_test_labels) + ["x" for i in range(M)]
-                est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('tilde_X_{}.png'.format(indx))
-                plt.close()
-                fig=plt.figure()
-                plt.plot(ell_test_hist)
-                plt.title('ell_test_trace')
-                fig.savefig('ell_test_trace_{}.png'.format(indx))
-                plt.close()
-                fig=plt.figure()
-                plt.plot(lp_test_pred_hist)
-                plt.title('lp_test_pred_trace')
-                fig.savefig('lp_test_pred_trace_{}.png'.format(indx))
-                plt.close()
-
-        max_indx = np.argmax(np.array(est_lp_test_pred_list))
-        self.est_tilde_X = est_tilde_X_list[max_indx]
-    
-        # #### Testing (Optimization seperately)
-        # lp_test_pred_hist = []
-        # logging.info("Start to test!")
-    
-        # for epoch in range(self.testing_epochs):
-        #     for indx in range(y_test.shape[0]):
-        #         self.sess.run(self.test_indx, feed_dict={self.indx: indx})
-        #     if epoch % display_step == 0:
-        #         # print(self.sess.run([self.Z, self.theta]))
-        #         # print training information
-        #         self.est_tilde_X, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test_pred, self.lp_test_pred, self.Z])
-        #         logging.info("Epoch: {}".format(epoch+1))
-        #         logging.info("lp_test_pred: {}".format(self.est_lp_test_pred))
-                
-        #         # plot all latent variables and inducing points
-        #         x_vec = np.concatenate([clgp_r.est_tilde_X[:,0], clgp_r.est_Z[:,0]])
-        #         y_vec = np.concatenate([clgp_r.est_tilde_X[:,1], clgp_r.est_Z[:,1]])
-        #         label_vec = list(y_test_labels) + ["x" for i in range(M)]
-        #         est_tilde_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-        #         fig = sns.lmplot(data=est_tilde_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-        #         fig.savefig('test_figs_seperate/LS_{}_{}_test.png'.format(args.method, epoch))
-        #         plt.close()
-                
-        #     lp_test_pred_hist.append(self.est_lp_test_pred)
-        #     self.lp_test_pred_hist = lp_test_pred_hist
-
-        # if verbose:
-        #     fig=plt.figure()
-        #     plt.plot(lp_test_pred_hist)
-        #     plt.title('lp_test_pred_trace')
-        #     fig.savefig('lp_test_pred_trace_{}.png'.format(args.method))
-        #     plt.close()
-
-        self.sess.close()
-
     def Cov_mat(self, theta, X1, X2 = None):
         # theta = variance + scale parameters. parameters are all under log scale.
         sigmaf2= theta[0]
@@ -581,7 +452,6 @@ if __name__=="__main__":
     parser.add_argument("--learning_rate_test", help="learning rate for testing data", type=float, default=0.001)
     parser.add_argument("--lower_bound", help="lower_bound of length scale in GP across time", type=float, default=0)
     parser.add_argument("--n_incomplete", help="number of incomplete pixels for every testing data", type=int, default=20)
-    parser.add_argument("--n_rs", help="number of random sampling for the embedding inputs of testing data", type=int, default=10)
     args=parser.parse_args()
 
     try:
@@ -647,18 +517,4 @@ if __name__=="__main__":
     clgp_r.Create_graph(y_train, y_test, learning_rate_train=args.learning_rate_train, learning_rate_test=args.learning_rate_test)
     # Training step
     clgp_r.Fit(y_train, display_step=500, training_epochs=args.training_epochs, verbose=True)
-    # Testing step
-    # clgp_r.Test(y_test, n_rs=args.n_rs, display_step=50, testing_epochs=args.testing_epochs, verbose=True)
-
-    # plot all latent variables and inducing points
-    # x_vec = np.concatenate([clgp_r.est_m[:,0], clgp_r.est_Z[:,0]])
-    # y_vec = np.concatenate([clgp_r.est_m[:,1], clgp_r.est_Z[:,1]])
-    # label_vec = list(y_train_labels) + ["x" for i in range(M)]
-    # est_m_stacked_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-    # fig = sns.lmplot(data=est_m_stacked_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-    # fig.savefig('LS_{}.png'.format(args.method))
-    # plt.close()
-
-    # Saving parameters
-    # with open("pars.pickle", "wb") as file:
-    #     pickle.dump([clgp_r.elbo_hist, clgp_r.lp_train_hist, clgp_r.lp_test_hist, clgp_r.est_tilde_X, clgp_r.est_Z, clgp_r.est_m, clgp_r.est_theta], file
+    
