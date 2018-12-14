@@ -365,11 +365,12 @@ class CLGP_R():
             # self.sess.run(self.train, feed_dict={self.lamb: lamb})
             self.sess.run(self.train_latent, feed_dict={self.lamb: lamb})
             self.sess.run(self.train_hyper, feed_dict={self.lamb: lamb})
+            self.est_lamb, self.est_elbo, self.est_theta, self.est_Z, self.est_m, self.est_sampled_X, self.est_mu, self.est_L, self.est_Sigma_U_list, self.est_U_noise_list, self.est_KL_U, self.est_KL_X, self.est_KL_ZX, self.est_Comp_F, self.summary = self.sess.run([self.lamb, self.elbo, self.theta, self.Z, self.m, self.sampled_X, self.mu, self.L, self.Sigma_U_list, self.U_noise_list, self.KL_U, self.KL_X, self.KL_ZX, self.Comp_F, self.summ], feed_dict={self.lamb: lamb})
+            self.est_ell_train, self.est_lp_train= self.sess.run([self.ell_train, self.lp_train])
+                
             if epoch % display_step == display_step-1:
                 # print(self.sess.run([self.Z, self.theta]))
                 # print training information
-                self.est_lamb, self.est_elbo, self.est_theta, self.est_Z, self.est_m, self.est_sampled_X, self.est_mu, self.est_L, self.est_Sigma_U_list, self.est_U_noise_list, self.est_KL_U, self.est_KL_X, self.est_KL_ZX, self.est_Comp_F, self.summary = self.sess.run([self.lamb, self.elbo, self.theta, self.Z, self.m, self.sampled_X, self.mu, self.L, self.Sigma_U_list, self.U_noise_list, self.KL_U, self.KL_X, self.KL_ZX, self.Comp_F, self.summ], feed_dict={self.lamb: lamb})
-                self.est_ell_train, self.est_lp_train= self.sess.run([self.ell_train, self.lp_train])
                 logging.info("Epoch: {}".format(epoch+1))
                 logging.info("elbo: {}, F: {}, KL_U:{}, KL_X:{}, KL_ZX:{}".format(self.est_elbo, self.est_Comp_F, self.est_KL_U, self.est_KL_X, self.est_KL_ZX))
                 logging.info("lp_train: {}".format(self.est_lp_train))
