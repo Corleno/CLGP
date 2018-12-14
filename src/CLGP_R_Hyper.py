@@ -365,7 +365,7 @@ class CLGP_R():
             # self.sess.run(self.train, feed_dict={self.lamb: lamb})
             self.sess.run(self.train_latent, feed_dict={self.lamb: lamb})
             self.sess.run(self.train_hyper, feed_dict={self.lamb: lamb})
-            if epoch % display_step == 0:
+            if epoch % display_step == display_step-1:
                 # print(self.sess.run([self.Z, self.theta]))
                 # print training information
                 self.est_lamb, self.est_elbo, self.est_theta, self.est_Z, self.est_m, self.est_sampled_X, self.est_mu, self.est_L, self.est_Sigma_U_list, self.est_U_noise_list, self.est_KL_U, self.est_KL_X, self.est_KL_ZX, self.est_Comp_F, self.summary = self.sess.run([self.lamb, self.elbo, self.theta, self.Z, self.m, self.sampled_X, self.mu, self.L, self.Sigma_U_list, self.U_noise_list, self.KL_U, self.KL_X, self.KL_ZX, self.Comp_F, self.summ], feed_dict={self.lamb: lamb})
@@ -380,10 +380,10 @@ class CLGP_R():
                 label_vec = list(y_train_labels) + ["x" for i in range(M)]
                 est_m_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
                 fig = sns.lmplot(data=est_m_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('train_figs/LS_{}_{}.png'.format(args.method, epoch))
+                fig.savefig('train_figs/LS_{}_{}.png'.format(args.method, epoch+1))
                 plt.close()
 
-            writer.add_summary(self.summary, epoch)
+            writer.add_summary(self.summary, epoch+1)
             lamb = min(1, lamb_inc+lamb)
             elbo_hist.append(self.est_elbo)
             lp_train_hist.append(self.est_lp_train)
