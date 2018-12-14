@@ -6,4 +6,4 @@
 
 source ~/.bashrc
 
-srun python ../src/CLGP_R.py --MC_T 5 --reg 0
+srun python ../src/CLGP_R_Hyper../src/.py --MC_T 5 --reg 0
