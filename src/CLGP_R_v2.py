@@ -78,6 +78,7 @@ class CLGP_R():
             self.lamb = tf.placeholder(tf.float32, name = 'lamb')
             self.indx = tf.placeholder(tf.int32, name = 'indx')
             self.init_tilde_X = tf.placeholder(tf.float32, shape=(self.N_test, self.Q))
+            self.indices_mask = tf.placeholder(tf.int32, [self.D])
 
             self.ltheta = tf.Variable(np.log(np.ones([self.D, self.Q + 1])*0.1), dtype=tf.float32, name="ltheta")
             # self.ltheta = tf.Variable(np.random.randn(self.D, self.Q + 1), dtype=tf.float32, name="ltheta")
@@ -199,7 +200,7 @@ class CLGP_R():
 
                     sampled_eps_f_d = tf.random_normal([self.sampled_X.shape.as_list()[0], self.K[d]])
                     sampled_f_d = tf.matmul(A_d, self.sampled_U[d,:,:self.K[d]]) + tf.multiply(tf.tile(tf.reshape(tf.sqrt(b_d), [-1,1]), [1,self.K[d]]), sampled_eps_f_d)
-                    y_d_indx = np.stack([np.linspace(0, self.y.shape[0]-1, self.y.shape[0]), self.y[:,d]], axis = 1).astype(np.int32)
+                    y_d_indx = np.stack([np.linspace(0, self.y_train.shape[0]-1, self.y_train.shape[0]), self.y_train[:,d]], axis = 1).astype(np.int32)
                     
                     # Make softmax more numerically stable
                     # self.sampled_f_d = sampled_f_d - tf.reduce_max(sampled_f_d, axis=-1, keepdims=True)
@@ -217,10 +218,9 @@ class CLGP_R():
             tf.summary.scalar("summary/Comp_F", self.Comp_F)
 
     def _create_metrics(self):
-        self.ell_train, self.lp_train, _ = self._Prediction_train() 
-        self.ell_test, self.lp_test, self.ell_test_vec = self._Prediction_test(train=True, n_incomplete=args.n_incomplete)
-        self.ell_test_pred, self.lp_test_pred = self._Prediction_test(train=False, n_incomplete=args.n_incomplete)
-        self.acc_test_pred = self._Compute_pred_acc(self.tilde_X, y_test, n_incomplete=args.n_incomplete)
+        self.ell_test, self.lp_test, self.ell_test_vec = self._Prediction_test(train=True)
+        self.ell_test_pred, self.lp_test_pred = self._Prediction_test(train=False)
+        self.acc_test_pred = self._Compute_pred_acc(self.tilde_X, self.y_test, indices_mask=self.indices_mask)
 
 
     def _create_loss_optimizer(self):
@@ -266,60 +266,65 @@ class CLGP_R():
         e_x = tf.exp(x)
         return e_x / tf.reduce_sum(e_x, axis = axis, keepdims=True)
 
-    def _Compute_ell_lp(self, X, Y, train=True, n_incomplete=0):
+    def _Compute_ell_lp(self, X, Y, train, indices_mask):
         N, D = Y.shape
+        self.indices = tf.boolean_mask(np.array(np.arange(D)), tf.cast(indices_mask, tf.float32) > 0.5)
+        self.testing_indices = tf.boolean_mask(np.array(np.arange(D)), tf.cast(indices_mask, tf.float32) < 0.5)
         ell_mat = []
-        ell = 0
         if train:
-            for d in range(D-n_incomplete):
+            for i in range(self.D_test):
+                d = self.indices[i]
                 Inv_cov_d_MM = tf.matrix_inverse(self._Cov_mat(self.theta[d,:], self.Z))
                 cov_NM = self._Cov_mat(self.theta[d,:], X, self.Z)
                 V_d = tf.matmul(cov_NM, Inv_cov_d_MM) # shape: N by M
-                est_f_d = tf.matmul(V_d, self.hat_U[:, d, :self.K[d]]) # shape N by K[d]
-                y_d_indx = np.stack([np.linspace(0, Y.shape[0]-1, Y.shape[0]), Y[:,d]], axis = 1).astype(np.int32)            
+                est_f_d = tf.matmul(V_d, tf.squeeze(tf.slice(self.hat_U, [0, d, 0], [self.M, 1, tf.gather(self.K, d)]), [1]))
+                # est_f_d = tf.matmul(V_d, self.hat_U[:, d, :tf.gather(self.K, [d])]) # shape N by K[d]
+                y_d_indx = tf.stack([np.linspace(0, Y.shape[0]-1, Y.shape[0]), tf.gather_nd(Y.T, [d])], axis = 1)           
                 ell_mat.append(tf.log(tf.gather_nd(tf.nn.softmax(est_f_d), y_d_indx)))
                 # paddings = np.array([[0,0], [0,self.K_max-self.K[d]]])
                 # est_f.append(tf.pad(est_f_d, paddings))
-            ell_mat = tf.stack(ell_mat, axis=1) # shape N by D
+            ell_mat = tf.stack(ell_mat, axis=1) # shape N by D_train
             # print("ell_mat", ell_mat)
             ell_vec = tf.reduce_sum(ell_mat, axis=1)
             ell = tf.reduce_sum(ell_mat)
-            lp = ell/(N*(D-n_incomplete))
+            lp = tf.reduce_mean(ell_mat)
             return ell, lp, ell_vec
         else: 
-            for d in range(D-n_incomplete, D):
+            for i in range(D-self.D_test):
+                d = self.testing_indices[i]
                 Inv_cov_d_MM = tf.matrix_inverse(self._Cov_mat(self.theta[d,:], self.Z))
                 cov_NM = self._Cov_mat(self.theta[d,:], X, self.Z)
                 V_d = tf.matmul(cov_NM, Inv_cov_d_MM) # shape: N by M
-                est_f_d = tf.matmul(V_d, self.hat_U[:, d, :self.K[d]]) # shape N by K[d]
-                y_d_indx = np.stack([np.linspace(0, Y.shape[0]-1, Y.shape[0]), Y[:,d]], axis = 1).astype(np.int32)            
-                ell += tf.reduce_sum(tf.log(tf.gather_nd(tf.nn.softmax(est_f_d), y_d_indx)))
+                est_f_d = tf.matmul(V_d, tf.squeeze(tf.slice(self.hat_U, [0, d, 0], [self.M, 1, tf.gather(self.K, d)]), [1]))
+                y_d_indx = tf.stack([np.linspace(0, Y.shape[0]-1, Y.shape[0]), tf.gather_nd(Y.T, [d])], axis = 1)           
+                ell_mat.append(tf.log(tf.gather_nd(tf.nn.softmax(est_f_d), y_d_indx)))
                 # paddings = np.array([[0,0], [0,self.K_max-self.K[d]]])
                 # est_f.append(tf.pad(est_f_d, paddings))
-            lp = ell/(N*n_incomplete)
+            ell_mat = tf.stack(ell_mat, axis=1)
+            ell = tf.reduce_sum(ell_mat)
+            lp = tf.reduce_mean(ell_mat)
             return ell, lp
 
-    def _Compute_pred_acc(self, X, Y, n_incomplete=0):
+    def _Compute_pred_acc(self, X, Y, indices_mask):
         N, D = Y.shape
         pred_mat = []
-        for d in range(D-n_incomplete, D):
+        testing_indices = tf.boolean_mask(np.array(np.arange(D)), tf.cast(indices_mask, tf.float32) < 0.5)
+
+        for i in range(D-self.D_test):
+            d = self.testing_indices[i]
             Inv_cov_d_MM = tf.matrix_inverse(self._Cov_mat(self.theta[d,:], self.Z))
             cov_NM = self._Cov_mat(self.theta[d,:], X, self.Z)
             V_d = tf.matmul(cov_NM, Inv_cov_d_MM) # shape: N by M
-            est_f_d = tf.matmul(V_d, self.hat_U[:, d, :self.K[d]])
+            est_f_d = tf.matmul(V_d, tf.squeeze(tf.slice(self.hat_U, [0, d, 0], [self.M, 1, tf.gather(self.K, d)]), [1]))
             pred_mat.append(tf.argmax(tf.nn.softmax(est_f_d), axis=-1))
         pred_mat = tf.stack(pred_mat, axis=1)
-        boolean_mat = tf.equal(pred_mat, Y[:, D-n_incomplete:])
+        boolean_mat = tf.equal(tf.cast(pred_mat, tf.int32),  tf.cast(tf.gather(Y, testing_indices, axis = 1), tf.int32)) # Y[:, testing_indices] tf.gather(Y, testing_indices, axis = 1)
         # print(boolean_mat)
         return tf.reduce_mean(tf.cast(boolean_mat, tf.float32))
 
-    def _Prediction_train(self):
-        # Compute the training log likelihood and testing log perplexity
-        return self._Compute_ell_lp(self.hat_X, y_train)
-
-    def _Prediction_test(self, train=True, n_incomplete = 0):
+    def _Prediction_test(self, train=True):
         # Compute the testing log likelihood and testing log perplexity
-        return self._Compute_ell_lp(self.tilde_X, y_test, train=train, n_incomplete=n_incomplete)
+        return self._Compute_ell_lp(self.tilde_X, self.y_test, train=train, indices_mask=self.indices_mask)
 
     def Create_graph(self, Y_train, Y_test, learning_rate_train=0.01, learning_rate_test=0.01, model_path='./model/model_tem.ckpt', hist_path='./logs/tem', method='Adam', method_test='RSM'):
         logging.info("Start to create graph!")
@@ -328,12 +333,14 @@ class CLGP_R():
         self.method=method
         self.method_test=method_test
         self.N, self.D = Y_train.shape
-        self.N_test, self.D_test = Y_test.shape
-        self.y = Y_train
+        self.D_test = int(self.D*0.8)
+        self.N_test, _ = Y_test.shape
+        self.y_train = Y_train
+        self.y_test = Y_test
 
         var_levels = np.zeros(self.D, dtype=np.int)
         for d in range(self.D):
-            var_levels[d] = len(np.unique(self.y[:, d].reshape([-1])))
+            var_levels[d] = len(np.unique(self.y_train[:, d].reshape([-1])))
         self.K = var_levels
         self.K_max = max(self.K)
 
@@ -349,92 +356,18 @@ class CLGP_R():
         # Initializing the tensor flow variables
         self.init = tf.global_variables_initializer()
 
+    def NN(self, y_train, y_test, indices):
+        indx_list = []
+        for n in range(self.N_test):
+            y_test_individual = y_test[n,:]
+            # compute distance between incomplete y_test and y_train
+            dist = np.sum(np.abs(y_train - y_test_individual)[:, indices], axis=1)
+            indx_list.append(np.argmin(dist))
+        indx_list = np.array(indx_list)
+        X_tilde = self.est_m[indx_list,:]
+        return X_tilde
 
-    def Fit(self, Y_train, display_step=5, lamb=0.001, lamb_inc=0.001, training_epochs=2000, model_path='./model/model_tem.ckpt', hist_path='./logs/tem', verbose=False):
-        # create folder for training figures
-        try:
-            os.makedirs('train_figs')
-        except:
-            pass
-
-        self.training_epochs=training_epochs
-
-        # Launch the session
-        self.sess = tf.InteractiveSession()
-        self.sess.run(self.init)
-
-        # create a history saver
-        writer = tf.summary.FileWriter(hist_path, self.sess.graph)
-        # cretate a model saver
-        saver = tf.train.Saver()
-
-        #### Training
-        elbo_hist=[]
-        lp_train_hist = []
-        # Training with KL annealing
-        # print(self.sess.run([self.Z, self.theta, self.KL_U, self.KL_X, self.KL_ZX, self.Comp_F, self.elbo, self.sampled_f_d], feed_dict={self.lamb: lamb}))
-
-        logging.info("Start to train!")
-        for epoch in range(self.training_epochs):
-            # self.sess.run(self.train, feed_dict={self.lamb: lamb})
-            self.sess.run(self.train_latent, feed_dict={self.lamb: lamb})
-            self.sess.run(self.train_hyper, feed_dict={self.lamb: lamb})
-            if epoch % display_step == 0:
-                # print(self.sess.run([self.Z, self.theta]))
-                # print training information
-                self.est_lamb, self.est_elbo, self.est_theta, self.est_Z, self.est_m, self.est_sampled_X, self.est_mu, self.est_L, self.est_Sigma_U_list, self.est_U_noise_list, self.est_KL_U, self.est_KL_X, self.est_KL_ZX, self.est_Comp_F, self.summary = self.sess.run([self.lamb, self.elbo, self.theta, self.Z, self.m, self.sampled_X, self.mu, self.L, self.Sigma_U_list, self.U_noise_list, self.KL_U, self.KL_X, self.KL_ZX, self.Comp_F, self.summ], feed_dict={self.lamb: lamb})
-                self.est_ell_train, self.est_lp_train= self.sess.run([self.ell_train, self.lp_train])
-                logging.info("Epoch: {}".format(epoch+1))
-                logging.info("elbo: {}, F: {}, KL_U:{}, KL_X:{}, KL_ZX:{}".format(self.est_elbo, self.est_Comp_F, self.est_KL_U, self.est_KL_X, self.est_KL_ZX))
-                logging.info("lp_train: {}".format(self.est_lp_train))
-                
-                # plot all latent variables and inducing points
-                x_vec = np.concatenate([clgp_r.est_m[:,0], clgp_r.est_Z[:,0]])
-                y_vec = np.concatenate([clgp_r.est_m[:,1], clgp_r.est_Z[:,1]])
-                label_vec = list(y_train_labels) + ["x" for i in range(M)]
-                est_m_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                fig = sns.lmplot(data=est_m_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('train_figs/LS_{}_{}.png'.format(args.method, epoch))
-                plt.close()
-
-                x_vec = np.concatenate([clgp_r.est_sampled_X[:,0], clgp_r.est_Z[:,0]])
-                y_vec = np.concatenate([clgp_r.est_sampled_X[:,1], clgp_r.est_Z[:,1]])
-                label_vec = list(y_train_labels) + ["x" for i in range(M)]
-                est_sampled_x_df = pd.DataFrame(data = {'x':x_vec, 'y':y_vec, 'label':label_vec})
-                fig = sns.lmplot(data=est_sampled_x_df, x='x', y='y', hue='label', markers=[0,1,2,3,4,5,6,7,8,9,"x"], fit_reg=False, legend=True, legend_out=True)
-                fig.savefig('train_figs/LS_{}_{}_sample.png'.format(args.method, epoch))
-                plt.close()                
-
-            writer.add_summary(self.summary, epoch)
-            lamb = min(1, lamb_inc+lamb)
-            elbo_hist.append(self.est_elbo)
-            lp_train_hist.append(self.est_lp_train)
-            self.elbo_hist = elbo_hist
-            self.lp_train_hist = lp_train_hist
-            
-        if verbose:
-            fig=plt.figure()
-            plt.plot(elbo_hist)
-            plt.title('Elbo_trace')
-            fig.savefig('EBLO_trace_{}.png'.format(args.method))
-            plt.close()
-            fig=plt.figure()
-            plt.plot(lp_train_hist)
-            plt.title('lp_train_trace')
-            fig.savefig('lp_train_trace_{}.png'.format(args.method))
-            plt.close()
-            
-
-
-        # Close history, saver, model saver and session
-        writer.close()
-        print("History has been saved under {}".format(hist_path))
-        # Save model weights to disk
-        saver.save(self.sess, model_path)
-        print("Model has beend saved under{}".format(model_path))
-        self.sess.close()
-
-    def Test(self, Y_test, n_rs = 1, display_step=5, testing_epochs=1000, model_path='./model/model_tem.ckpt', verbose=False):
+    def Test(self, n_rs = 1, display_step=200, testing_epochs=1000, model_path='./model/model_tem.ckpt', verbose=False):
         # create folder for training figures
         try:
             os.makedirs('test_figs')
@@ -462,27 +395,44 @@ class CLGP_R():
         # Restore model
         saver.restore(self.sess, model_path)
         print("Model restored.")
+        self.est_m = self.sess.run(self.m)
 
         est_lp_test_pred_list = []
         est_acc_test_pred_list = []
         est_tilde_X_list = []
+
         for indx in range(n_rs):
-            # Random sample the testing embedding inputs
-            self.sess.run(self.assign_rs_tilde_X, feed_dict={self.init_tilde_X: np.random.randn(self.N_test, self.Q)})
-        
+            # Randomly set indices
+            indices = np.random.choice(self.D, self.D_test, replace=False)
+            indices_mask = np.zeros(self.D)
+            indices_mask[indices] = 1
+            # Pre-estimate the latent variable using nearest neighbor algorithm
+            init_tilde_X = self.NN(self.y_train, self.y_test, indices)
+            # print("The initial tilde X = {}".format(init_tilde_X))
+
+            # Randomly sample the testing embedding inputs
+            self.sess.run(self.assign_rs_tilde_X, feed_dict={self.indices_mask: indices_mask, self.init_tilde_X: init_tilde_X})
+
             #### Testing (Optimization together)
             ell_test_hist = []
             lp_test_pred_hist = []
+            acc_test_pred_hist = []
             logging.info("Start to test!")
+            print("Start to test!")
 
             for epoch in range(self.testing_epochs):
-                self.sess.run(self.test)
-                if epoch % display_step == 0:
-                    # print training information
-                    self.est_tilde_X, self.est_ell_test, self.est_acc_test_pred, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test, self.acc_test_pred, self.ell_test_pred, self.lp_test_pred, self.Z])
+                print("Epoch {}".format(epoch))
+                # print(self.sess.run([self.indices, self.testing_indices], feed_dict={self.indices_mask: indices_mask}))
+                self.sess.run(self.test, feed_dict={self.indices_mask: indices_mask})
+                # print training information
+                self.est_tilde_X, self.est_ell_test, self.est_acc_test_pred, self.est_ell_test_pred, self.est_lp_test_pred, self.est_Z = self.sess.run([self.tilde_X, self.ell_test, self.acc_test_pred, self.ell_test_pred, self.lp_test_pred, self.Z],  feed_dict={self.indices_mask: indices_mask})
+                if epoch % display_step == display_step-1:
                     logging.info("Epoch: {}".format(epoch+1))
                     logging.info("acc_test_pred: {}".format(self.est_acc_test_pred))
                     logging.info("lp_test_pred: {}".format(self.est_lp_test_pred))
+                    print("Epoch: {}".format(epoch+1))
+                    print("acc_test_pred: {}".format(self.est_acc_test_pred))
+                    print("lp_test_pred: {}".format(self.est_lp_test_pred))
                     
                     # # plot all latent variables and inducing points
                     # x_vec = np.concatenate([clgp_r.est_tilde_X[:,0], clgp_r.est_Z[:,0]])
@@ -495,9 +445,10 @@ class CLGP_R():
                     
                 ell_test_hist.append(self.est_ell_test)
                 lp_test_pred_hist.append(self.est_lp_test_pred)
-                
+                acc_test_pred_hist.append(self.est_acc_test_pred)
             self.ell_test_hist = ell_test_hist
             self.lp_test_pred_hist = lp_test_pred_hist
+            self.acc_test_pred_hist = acc_test_pred_hist
                 
             est_lp_test_pred_list.append(self.est_lp_test_pred)
             est_acc_test_pred_list.append(self.est_acc_test_pred)
@@ -523,13 +474,22 @@ class CLGP_R():
                 fig.savefig('test_figs/lp/lp_test_pred_trace_{}.png'.format(indx))
                 plt.close()
 
-        self.est_lp_test_pred_list = est_lp_test_pred_list
-        self.est_acc_test_pred_list = est_acc_test_pred_list
-        self.est_tilde_X_list = est_tilde_X_list
+        self.est_lp_test_pred_list = np.array(est_lp_test_pred_list)
+        self.est_acc_test_pred_list = np.array(est_acc_test_pred_list)
+        self.est_tilde_X_list = np.array(est_tilde_X_list)
 
-        max_indx = np.argmax(np.array(est_lp_test_pred_list))
-        self.est_lp_test_pred = np.max(np.array(est_lp_test_pred_list))
-        self.est_tilde_X = est_tilde_X_list[max_indx]
+        logging.info("The mean of lp_test_pred_list = {}".format(np.mean(self.est_lp_test_pred_list)))
+        logging.info("The std of lp_test_pred_list = {}".format(np.std(self.est_lp_test_pred_list)))
+        logging.info("The mean of lp_test_pred_list = {}".format(np.mean(self.est_acc_test_pred_list)))
+        logging.info("The std of lp_test_pred_list = {}".format(np.std(self.est_acc_test_pred_list)))
+        print("The mean of lp_test_pred_list = {}".format(np.mean(self.est_lp_test_pred_list)))
+        print("The std of lp_test_pred_list = {}".format(np.std(self.est_lp_test_pred_list)))
+        print("The mean of lp_test_pred_list = {}".format(np.mean(self.est_acc_test_pred_list)))
+        print("The std of lp_test_pred_list = {}".format(np.std(self.est_acc_test_pred_list)))
+        
+        # max_indx = np.argmax(np.array(est_lp_test_pred_list))
+        # self.est_lp_test_pred = np.max(np.array(est_lp_test_pred_list))
+        # self.est_tilde_X = est_tilde_X_list[max_indx]
 
         self.sess.close()
 
@@ -565,11 +525,10 @@ if __name__=="__main__":
     parser.add_argument("--dataset", help="name of dataset", type=str, default='binaryalphadigs_small')
     parser.add_argument("--reg", help="regularization", type=float, default=-1)
     parser.add_argument("--training_epochs", help="number of training epochs", type=int, default=2000)
-    parser.add_argument("--testing_epochs", help="number of testing epochs", type=int, default=250)
+    parser.add_argument("--testing_epochs", help="number of testing epochs", type=int, default=200)
     parser.add_argument("--learning_rate_train", help="learning rate for training data", type=float, default=0.01)
     parser.add_argument("--learning_rate_test", help="learning rate for testing data", type=float, default=0.01)
     parser.add_argument("--lower_bound", help="lower_bound of length scale in GP across time", type=float, default=0)
-    parser.add_argument("--n_incomplete", help="number of incomplete pixels for every testing data", type=int, default=20)
     parser.add_argument("--n_rs", help="number of random sampling for the embedding inputs of testing data", type=int, default=10)
     args=parser.parse_args()
 
@@ -634,10 +593,8 @@ if __name__=="__main__":
     clgp_r = CLGP_R(M=M, Q=Q, MC_T=MC_T, reg=reg, init_loc=init_loc, init_inducing=init_inducing)
     # Create graph
     clgp_r.Create_graph(y_train, y_test, learning_rate_train=args.learning_rate_train, learning_rate_test=args.learning_rate_test)
-    # Training step
-    # clgp_r.Fit(y_train, display_step=5, training_epochs=args.training_epochs, verbose=True)
     # Testing step
-    clgp_r.Test(y_test, n_rs=args.n_rs, display_step=10, testing_epochs=args.testing_epochs, verbose=True)
+    clgp_r.Test(n_rs=args.n_rs, display_step=50, testing_epochs=args.testing_epochs, verbose=True)
 
     # plot all latent variables and inducing points
     # x_vec = np.concatenate([clgp_r.est_m[:,0], clgp_r.est_Z[:,0]])
