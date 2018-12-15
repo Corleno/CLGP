@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#SBATCH -N 1
+#SBATCH -p pbatch
+#SBATCH -t 23:59:59
+
+source ~/.bashrc
+
+srun python ../src/CLGP_R_Hyper_v2.py --MC_T 5 --reg 0
