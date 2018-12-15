@@ -413,3 +413,139 @@ INFO:root:Standard deviations of variational distribution for embedding inputs a
  [ 0.10215721  0.08941555]
  [ 0.10631859  0.1049815 ]]
 INFO:root:Standard deviations of prior distribution for embedding inputs are 1.0
+INFO:root:Start to create graph!
+INFO:tensorflow:Restoring parameters from ./model/model_tem.ckpt
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7493055462837219
+INFO:root:lp_test_pred: -0.5210581421852112
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7479166388511658
+INFO:root:lp_test_pred: -0.5224055051803589
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7479166388511658
+INFO:root:lp_test_pred: -0.5220023393630981
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7472222447395325
+INFO:root:lp_test_pred: -0.5222026109695435
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7784722447395325
+INFO:root:lp_test_pred: -0.4922351539134979
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7784722447395325
+INFO:root:lp_test_pred: -0.4888871908187866
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7784722447395325
+INFO:root:lp_test_pred: -0.48637712001800537
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7805555462837219
+INFO:root:lp_test_pred: -0.48589977622032166
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7548611164093018
+INFO:root:lp_test_pred: -0.5233988165855408
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7562500238418579
+INFO:root:lp_test_pred: -0.5200227499008179
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7562500238418579
+INFO:root:lp_test_pred: -0.5199723839759827
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7562500238418579
+INFO:root:lp_test_pred: -0.5199647545814514
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7395833134651184
+INFO:root:lp_test_pred: -0.5251373052597046
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.737500011920929
+INFO:root:lp_test_pred: -0.5223066210746765
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.737500011920929
+INFO:root:lp_test_pred: -0.5229243636131287
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7368055582046509
+INFO:root:lp_test_pred: -0.5230658054351807
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7486110925674438
+INFO:root:lp_test_pred: -0.5168176889419556
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7534722089767456
+INFO:root:lp_test_pred: -0.5175400376319885
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7520833611488342
+INFO:root:lp_test_pred: -0.5184462666511536
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7527777552604675
+INFO:root:lp_test_pred: -0.5185188055038452
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7409722208976746
+INFO:root:lp_test_pred: -0.5243253111839294
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7444444298744202
+INFO:root:lp_test_pred: -0.5219875574111938
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7458333373069763
+INFO:root:lp_test_pred: -0.5213413834571838
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7465277910232544
+INFO:root:lp_test_pred: -0.5204057693481445
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7701388597488403
+INFO:root:lp_test_pred: -0.4989142417907715
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7708333134651184
+INFO:root:lp_test_pred: -0.4970243573188782
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7708333134651184
+INFO:root:lp_test_pred: -0.4968799650669098
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7715277671813965
+INFO:root:lp_test_pred: -0.49663245677948
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7569444179534912
+INFO:root:lp_test_pred: -0.503910481929779
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7590277791023254
+INFO:root:lp_test_pred: -0.5027517676353455
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7583333253860474
+INFO:root:lp_test_pred: -0.5026000738143921
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7583333253860474
+INFO:root:lp_test_pred: -0.5025883316993713
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7423611283302307
+INFO:root:lp_test_pred: -0.5215594172477722
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7444444298744202
+INFO:root:lp_test_pred: -0.5187039971351624
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7451388835906982
+INFO:root:lp_test_pred: -0.5177041292190552
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7444444298744202
+INFO:root:lp_test_pred: -0.5171622633934021
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7437499761581421
+INFO:root:lp_test_pred: -0.543832540512085
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7437499761581421
+INFO:root:lp_test_pred: -0.5430068373680115
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7423611283302307
+INFO:root:lp_test_pred: -0.5433353185653687
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7430555820465088
+INFO:root:lp_test_pred: -0.5433693528175354
+INFO:root:The mean of lp_test_pred_list = -0.5149809718132019
+INFO:root:The std of lp_test_pred_list = 0.015267347916960716
+INFO:root:The mean of lp_test_pred_list = 0.7537500262260437
+INFO:root:The std of lp_test_pred_list = 0.012828245759010315

@@ -32,3 +32,139 @@ INFO:root:lp_train: -0.3820821940898895
 INFO:root:Epoch: 5000
 INFO:root:elbo: -13426.2900390625, F: -10348.908203125, KL_U:1698.19970703125, KL_X:1375.826171875, KL_ZX:0.016778752207756042
 INFO:root:lp_train: -0.3802762031555176
+INFO:root:Start to create graph!
+INFO:tensorflow:Restoring parameters from ./model/model_tem.ckpt
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7444444298744202
+INFO:root:lp_test_pred: -0.5210365056991577
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7444444298744202
+INFO:root:lp_test_pred: -0.5207400918006897
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7437499761581421
+INFO:root:lp_test_pred: -0.5214250087738037
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7444444298744202
+INFO:root:lp_test_pred: -0.517909824848175
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7736111283302307
+INFO:root:lp_test_pred: -0.4932340085506439
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7736111283302307
+INFO:root:lp_test_pred: -0.49195748567581177
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7729166746139526
+INFO:root:lp_test_pred: -0.4904281497001648
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7729166746139526
+INFO:root:lp_test_pred: -0.48952433466911316
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7527777552604675
+INFO:root:lp_test_pred: -0.5321826934814453
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7569444179534912
+INFO:root:lp_test_pred: -0.5287824273109436
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7555555701255798
+INFO:root:lp_test_pred: -0.5292444825172424
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7562500238418579
+INFO:root:lp_test_pred: -0.5292625427246094
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7472222447395325
+INFO:root:lp_test_pred: -0.5147613286972046
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7430555820465088
+INFO:root:lp_test_pred: -0.5139186978340149
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7430555820465088
+INFO:root:lp_test_pred: -0.5150923132896423
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7430555820465088
+INFO:root:lp_test_pred: -0.515144944190979
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7451388835906982
+INFO:root:lp_test_pred: -0.5251941084861755
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7416666746139526
+INFO:root:lp_test_pred: -0.5229203701019287
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7395833134651184
+INFO:root:lp_test_pred: -0.5231668949127197
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7388888597488403
+INFO:root:lp_test_pred: -0.5232061743736267
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7506944537162781
+INFO:root:lp_test_pred: -0.5249530076980591
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7506944537162781
+INFO:root:lp_test_pred: -0.5200837850570679
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7493055462837219
+INFO:root:lp_test_pred: -0.5205351114273071
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.75
+INFO:root:lp_test_pred: -0.520753800868988
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7743055820465088
+INFO:root:lp_test_pred: -0.4858178496360779
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7729166746139526
+INFO:root:lp_test_pred: -0.4849116802215576
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7729166746139526
+INFO:root:lp_test_pred: -0.4849085807800293
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7729166746139526
+INFO:root:lp_test_pred: -0.48489898443222046
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7527777552604675
+INFO:root:lp_test_pred: -0.5081326961517334
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7527777552604675
+INFO:root:lp_test_pred: -0.5089947581291199
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7527777552604675
+INFO:root:lp_test_pred: -0.5090811252593994
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7527777552604675
+INFO:root:lp_test_pred: -0.5091021060943604
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.7270833253860474
+INFO:root:lp_test_pred: -0.5408768653869629
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.7326388955116272
+INFO:root:lp_test_pred: -0.5368844270706177
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7319444417953491
+INFO:root:lp_test_pred: -0.5360111594200134
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7326388955116272
+INFO:root:lp_test_pred: -0.5348407030105591
+INFO:root:Start to test!
+INFO:root:Epoch: 50
+INFO:root:acc_test_pred: 0.731249988079071
+INFO:root:lp_test_pred: -0.5563474297523499
+INFO:root:Epoch: 100
+INFO:root:acc_test_pred: 0.731249988079071
+INFO:root:lp_test_pred: -0.5585079193115234
+INFO:root:Epoch: 150
+INFO:root:acc_test_pred: 0.7291666865348816
+INFO:root:lp_test_pred: -0.5590158104896545
+INFO:root:Epoch: 200
+INFO:root:acc_test_pred: 0.7298611402511597
+INFO:root:lp_test_pred: -0.5570350885391235
+INFO:root:The mean of lp_test_pred_list = -0.5181678533554077
+INFO:root:The std of lp_test_pred_list = 0.019905956462025642
+INFO:root:The mean of lp_test_pred_list = 0.7493749856948853
+INFO:root:The std of lp_test_pred_list = 0.01415185071527958
