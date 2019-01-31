@@ -527,6 +527,7 @@ if __name__=="__main__":
     parser.add_argument("--training_epochs", help="number of training epochs", type=int, default=1000)
     parser.add_argument("--learning_rate", help="learning rate", type=float, default=0.1)
     parser.add_argument("--batch_size", help="batch size", type=int, default=128)
+    parser.add_argument("--lamb_inc", help="increase for the KL annealing", type=float, default=0.002)
     parser.add_argument("--display_step", help="display_step", type=int, default=100)
     parser.add_argument("--lower_bound", help="lower_bound of length scale in GP across time", type=float, default=0)
     parser.add_argument("--upper_bound", help="upper_bound of variance of nugget effects", type=float, default=0)
@@ -646,7 +647,7 @@ if __name__=="__main__":
     np.random.seed(22)
     clgp_t = CLGP_T(M=M, Q=Q, reg=reg, init_loc=init_loc, init_inducing=init_inducing, nugget=args.nugget)
     clgp_t.Create_graph(Y_train, T_train, T_num_train, batch_size=args.batch_size, learning_rate=args.learning_rate, training_epochs = args.training_epochs, method=args.method)
-    clgp_t.Fit(Y_train, T_train, T_num_train, batch_size=args.batch_size, display_step=args.display_step, lamb = 0.001, verbose=True)
+    clgp_t.Fit(Y_train, T_train, T_num_train, batch_size=args.batch_size, display_step=args.display_step, lamb = 0.001, lamb_inc=args.lamb_inc, verbose=True)
     # log hyper-parameter self.est_theta, self.est_Z, self.est_mu, self.est_L, self.est_m, self.est_s, self.est_phi
     if args.nugget:
         logging.info('theta: {}\n phi: {}\n theta_nugget: {}\n phi_nugget: {}\n'.format(clgp_t.est_theta, clgp_t.est_phi, clgp_t.est_theta_nugget, clgp_t.est_phi_nugget))
